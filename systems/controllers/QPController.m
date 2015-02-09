@@ -25,7 +25,18 @@ classdef QPController < MIMODrakeSystem
 
     qddframe = controller_data.acceleration_input_frame; % input frame for desired qddot
 
-    input_frame = MultiCoordinateFrame({r.getStateFrame,qddframe,atlasFrames.FootContactState,body_accel_input_frames{:}});
+    input_frame = MultiCoordinateFrame([{r.getStateFrame,qddframe,atlasFrames.FootContactState},body_accel_input_frames]);
+
+    % whether to add desired centroidal momentum as an input
+    if ~isfield(options,'input_h_des')
+      options.input_h_des = false;
+    else
+      typecheck(options.input_h_des,'logical');
+    end
+
+    if options.input_h_des
+      input_frame.appendFrame(atlasFrames.CentroidalMomentum);
+    end
 
     % whether to output generalized accelerations AND inputs (u)
     if ~isfield(options,'output_qdd')
@@ -65,13 +76,22 @@ classdef QPController < MIMODrakeSystem
       obj.use_bullet = false;
     end
 
-    % weight for the hdot objective term
+    % weight for the kdot objective term
     if isfield(options,'W_kdot')
       typecheck(options.W_kdot,'double');
       sizecheck(options.W_kdot,[3 3]);
       obj.W_kdot = options.W_kdot;
     else
       obj.W_kdot = zeros(3);
+    end
+
+    % weight for the ldot objective term
+    if isfield(options,'W_ldot')
+      typecheck(options.W_ldot,'double');
+      sizecheck(options.W_ldot,[3 3]);
+      obj.W_ldot = options.W_ldot;
+    else
+      obj.W_ldot = zeros(3);
     end
 
     % weight for the desired qddot objective term
@@ -101,13 +121,22 @@ classdef QPController < MIMODrakeSystem
       obj.w_slack = 0.001;
     end
 
-    % proportunal gain for angular momentum
+    % proportional gain for centroidal angular momentum
     if isfield(options,'Kp_ang')
       typecheck(options.Kp_ang,'double');
       sizecheck(options.Kp_ang,1);
       obj.Kp_ang = options.Kp_ang;
     else
       obj.Kp_ang = 1.0;
+    end
+
+    % proportional gain for centroidal linear momentum
+    if isfield(options,'Kp_lin')
+      typecheck(options.Kp_lin,'double');
+      sizecheck(options.Kp_lin,1);
+      obj.Kp_lin = options.Kp_lin;
+    else
+      obj.Kp_lin = 1.0;
     end
 
     % gain for support acceleration constraint: accel=-Kp_accel*vel
@@ -208,6 +237,7 @@ classdef QPController < MIMODrakeSystem
     [obj.jlmin, obj.jlmax] = getJointLimits(r);
         
     obj.output_qdd = options.output_qdd;
+    obj.input_h_des = options.input_h_des;
   end
 
   function varargout=mimoOutput(obj,t,~,varargin)
@@ -343,9 +373,13 @@ classdef QPController < MIMODrakeSystem
       [xcom,Jcom] = getCOM(r,kinsol);
 
       include_angular_momentum = any(any(obj.W_kdot));
+      include_linear_momentum = any(any(obj.W_ldot));
 
-      if include_angular_momentum
+      if include_angular_momentum || include_linear_momentum
         [A,Adot] = getCMM(r,kinsol,qd);
+        if obj.input_h_des
+          h_des = varargin{4 + obj.n_body_accel_inputs};
+        end
       end
 
       Jcomdot = forwardJacDot(r,kinsol,0);
@@ -487,6 +521,20 @@ classdef QPController < MIMODrakeSystem
         Akdot = Adot(1:3,:);
         k=Ak*qd;
         kdot_des = -obj.Kp_ang*k;
+        if obj.input_h_des
+          k_des = h_des(1:3);
+          kdot_des = kdot_des + obj.Kp_ang*k_des;
+        end
+      end
+      if include_linear_momentum
+        Al = A(4:6,:);
+        Aldot = Adot(4:6,:);
+        l = Al*qd;
+        ldot_des = -obj.Kp_lin*l;
+        if obj.input_h_des
+          l_des = h_des(4:6);
+          ldot_des = ldot_des + obj.Kp_lin*l_des;
+        end
       end
 
       %----------------------------------------------------------------------
@@ -494,12 +542,16 @@ classdef QPController < MIMODrakeSystem
       %
       % min: ybar*Qy*ybar + ubar*R*ubar + (2*S*xbar + s1)*(A*x + B*u) +
       % w_qdd*quad(qddot_ref - qdd) + w_eps*quad(epsilon) +
-      % w_grf*quad(beta) + quad(kdot_des - (A*qdd + Adot*qd))
+      % w_grf*quad(beta) + W_kdot*quad(kdot_des - (Ak*qdd + Akdot*qd)) +
+      % W_ldot*quad(ldot_des - (Al*qdd + Aldot*qd))
       if nc > 0
         Hqp = Iqdd'*Jcom'*R_DQyD_ls*Jcom*Iqdd;
         Hqp(1:nq,1:nq) = Hqp(1:nq,1:nq) + diag(w_qdd);
         if include_angular_momentum
           Hqp = Hqp + Iqdd'*Ak'*obj.W_kdot*Ak*Iqdd;
+        end
+        if include_linear_momentum
+          Hqp = Hqp + Iqdd'*Al'*obj.W_ldot*Al*Iqdd;
         end
 
         fqp = xlimp'*C_ls'*Qy*D_ls*Jcom*Iqdd;
@@ -511,6 +563,10 @@ classdef QPController < MIMODrakeSystem
         if include_angular_momentum
           fqp = fqp + qd'*Akdot'*obj.W_kdot*Ak*Iqdd;
           fqp = fqp - kdot_des'*obj.W_kdot*Ak*Iqdd;
+        end
+        if include_linear_momentum
+          fqp = fqp + qd'*Aldot'*obj.W_ldot*Al*Iqdd;
+          fqp = fqp - ldot_des'*obj.W_ldot*Al*Iqdd;
         end
 
         Hqp(nq+(1:nf),nq+(1:nf)) = obj.w_grf*eye(nf);
@@ -693,11 +749,13 @@ classdef QPController < MIMODrakeSystem
     numq;
     controller_data; % shared data handle that holds S, h, foot trajectories, etc.
     W_kdot; % angular momentum cost term weight matrix
+    W_ldot; % linear momentum cost term weight matrix
     w_qdd; % qdd objective function weight vector
     w_grf; % scalar ground reaction force weight
     w_slack; % scalar slack var weight
     slack_limit; % maximum absolute magnitude of acceleration slack variable values
-    Kp_ang; % proportunal gain for angular momentum feedback
+    Kp_ang; % proportional gain for angular momentum feedback
+    Kp_lin; % proportional gain for linear momentum feedback
     Kp_accel; % gain for support acceleration constraint: accel=-Kp_accel*vel
     gurobi_options = struct();
     solver=0;
@@ -711,6 +769,7 @@ classdef QPController < MIMODrakeSystem
     jlmin;
     jlmax;
     output_qdd = false;
+    input_h_des = false;
     body_accel_input_weights; % array of doubles, negative values signal constraints
     n_body_accel_inputs;
     body_accel_bounds;

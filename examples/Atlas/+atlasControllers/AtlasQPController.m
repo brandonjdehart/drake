@@ -37,6 +37,13 @@ classdef AtlasQPController < QPController
     else
       obj.min_knee_angle = 0.0;
     end
+    
+    if isfield(controller_data, 'plan_shift')
+      sizecheck(controller_data.plan_shift, [3 1]);
+      typecheck(controller_data.plan_shift, 'double');
+    else
+      controller_data.plan_shift = zeros(3,1);
+    end
 
     obj.controller_data.left_toe_off = false;
     obj.controller_data.right_toe_off = false;
@@ -214,9 +221,13 @@ classdef AtlasQPController < QPController
       [xcom,Jcom] = getCOM(r,kinsol);
 
       include_angular_momentum = any(any(obj.W_kdot));
+      include_linear_momentum = any(any(obj.W_ldot));
 
-      if include_angular_momentum
+      if include_angular_momentum || include_linear_momentum
         [A,Adot] = getCMM(r,kinsol,qd);
+        if obj.input_h_des
+          h_des = varargin{4 + obj.n_body_accel_inputs};
+        end
       end
 
       Jcomdot = forwardJacDot(r,kinsol,0);
@@ -288,7 +299,6 @@ classdef AtlasQPController < QPController
 
       % input saturation constraints
       % u=B_act'*(H_act*qdd + C_act - Jz_act'*z - Dbar_act*beta)
-
       if nc>0
         Ain_{1} = B_act'*(H_act*Iqdd - Dbar_act*Ibeta);
       else
@@ -358,6 +368,20 @@ classdef AtlasQPController < QPController
         Akdot = Adot(1:3,:);
         k=Ak*qd;
         kdot_des = -obj.Kp_ang*k;
+        if obj.input_h_des
+          k_des = h_des(1:3);
+          kdot_des = kdot_des + obj.Kp_ang*k_des;
+        end
+      end
+      if include_linear_momentum
+        Al = A(4:6,:);
+        Aldot = Adot(4:6,:);
+        l = Al*qd;
+        ldot_des = -obj.Kp_lin*l;
+        if obj.input_h_des
+          l_des = h_des(4:6);
+          ldot_des = ldot_des + obj.Kp_lin*l_des;
+        end
       end
 
       %----------------------------------------------------------------------
@@ -365,12 +389,16 @@ classdef AtlasQPController < QPController
       %
       % min: ybar*Qy*ybar + ubar*R*ubar + (2*S*xbar + s1)*(A*x + B*u) +
       % w_qdd*quad(qddot_ref - qdd) + w_eps*quad(epsilon) +
-      % w_grf*quad(beta) + quad(kdot_des - (A*qdd + Adot*qd))
+      % w_grf*quad(beta) + W_kdot*quad(kdot_des - (Ak*qdd + Akdot*qd)) +
+      % W_ldot*quad(ldot_des - (Al*qdd + Aldot*qd))
       if nc > 0
         Hqp = Iqdd'*Jcom'*R_DQyD_ls*Jcom*Iqdd;
         Hqp(1:nq,1:nq) = Hqp(1:nq,1:nq) + diag(w_qdd);
         if include_angular_momentum
           Hqp = Hqp + Iqdd'*Ak'*obj.W_kdot*Ak*Iqdd;
+        end
+        if include_linear_momentum
+          Hqp = Hqp + Iqdd'*Al'*obj.W_ldot*Al*Iqdd;
         end
 
         fqp = xlimp'*C_ls'*Qy*D_ls*Jcom*Iqdd;
@@ -382,6 +410,10 @@ classdef AtlasQPController < QPController
         if include_angular_momentum
           fqp = fqp + qd'*Akdot'*obj.W_kdot*Ak*Iqdd;
           fqp = fqp - kdot_des'*obj.W_kdot*Ak*Iqdd;
+        end
+        if include_linear_momentum
+          fqp = fqp + qd'*Aldot'*obj.W_ldot*Al*Iqdd;
+          fqp = fqp - ldot_des'*obj.W_ldot*Al*Iqdd;
         end
 
         Hqp(nq+(1:nf),nq+(1:nf)) = obj.w_grf*eye(nf);
