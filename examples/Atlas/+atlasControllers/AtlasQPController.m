@@ -38,6 +38,13 @@ classdef AtlasQPController < QPController
       obj.min_knee_angle = 0.0;
     end
 
+    if isfield(controller_data, 'plan_shift')
+      sizecheck(controller_data.plan_shift, [3 1]);
+      typecheck(controller_data.plan_shift, 'double');
+    else
+      controller_data.plan_shift = zeros(3,1);
+    end
+
     obj.controller_data.left_toe_off = false;
     obj.controller_data.right_toe_off = false;
   end
@@ -288,7 +295,6 @@ classdef AtlasQPController < QPController
 
       % input saturation constraints
       % u=B_act'*(H_act*qdd + C_act - Jz_act'*z - Dbar_act*beta)
-
       if nc>0
         Ain_{1} = B_act'*(H_act*Iqdd - Dbar_act*Ibeta);
       else
