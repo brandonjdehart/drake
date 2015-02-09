@@ -37,7 +37,7 @@ classdef AtlasQPController < QPController
     else
       obj.min_knee_angle = 0.0;
     end
-
+    
     if isfield(controller_data, 'plan_shift')
       sizecheck(controller_data.plan_shift, [3 1]);
       typecheck(controller_data.plan_shift, 'double');
