@@ -70,7 +70,7 @@ end
 istep = struct('right', 1, 'left', 1);
 is_first_step = true;
 
-while 1
+while istep.left < length(steps.left) || istep.right < length(steps.right)
   if is_right_foot
     sw_foot = 'right'; % moving (swing) foot
     st_foot = 'left'; % stance foot
@@ -107,9 +107,6 @@ while 1
   istep.(sw_foot) = istep.(sw_foot) + 1;
 
   is_right_foot = ~is_right_foot;
-  if istep.left == length(steps.left) && istep.right == length(steps.right)
-    break
-  end
 end
 
 % add a segment at the end to recover
