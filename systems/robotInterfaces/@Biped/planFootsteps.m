@@ -85,6 +85,12 @@ plan = FootstepPlan.blank_plan(obj, options.step_params.max_num_steps + 2, [obj.
 plan.footsteps(1).pos = start_pos.(foot1);
 plan.footsteps(2).pos = start_pos.(foot2);
 
+if all(start_pos.right == goal_pos.right) && all(start_pos.left == goal_pos.left)
+  warning('Goal position is same as start position. Returning just the initial footstep poses');
+  plan = plan.slice(1:2);
+  solvertime = 0;
+  return;
+end
 
 start_pos.right(4:5) = 0;
 start_pos.left(4:5) = 0;

@@ -3,7 +3,7 @@ function [zmptraj, link_constraints, support_times, supports] = planZMPTraj(bipe
 % @param q0 the initial configuration vector
 % @param footsteps a list of Footstep objects
 % @option t0 the initial time offset of the trajectories to be generated (default: 0)
-% @option first_step_hold_s the number of seconds to wait before lifting the first foot (default: 1)
+% @option first_step_hold_s the number of seconds to wait before lifting the first foot (default: 1.5)
 
 if nargin < 4; options = struct(); end
 
@@ -114,7 +114,9 @@ t0 = foot_origin_knots(end).t;
 foot_origin_knots(end+1) = foot_origin_knots(end);
 foot_origin_knots(end).t = t0 + 1.5;
 zmpf = mean([steps.right(end).pos(1:2), steps.left(end).pos(1:2)], 2);
-zmp_knots(end+1) =  struct('t', foot_origin_knots(end-1).t, 'zmp', zmpf, 'supp', RigidBodySupportState(biped, [rfoot_body_idx, lfoot_body_idx]));
+if length(foot_origin_knots) > 2
+  zmp_knots(end+1) =  struct('t', foot_origin_knots(end-1).t, 'zmp', zmpf, 'supp', RigidBodySupportState(biped, [rfoot_body_idx, lfoot_body_idx]));
+end
 zmp_knots(end+1) =  struct('t', foot_origin_knots(end).t, 'zmp', zmpf, 'supp', RigidBodySupportState(biped, [rfoot_body_idx, lfoot_body_idx]));
 
 % Build trajectories
