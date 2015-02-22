@@ -121,7 +121,6 @@ for i=1:size(left_foot_steps,2);
   cpos = rpy2rotmat(left_foot_steps(4:6,i)) * tc_lfoot.pts + repmat(left_foot_steps(1:3,i),1,4);
   if all(cpos(3,:)<=0.001)
     plot(cpos(1,[1,2]),cpos(2,[1,2]),'k-','LineWidth',2);
-    plot(cpos(1,[1,3]),cpos(2,[1,3]),'g-','LineWidth',2);
     plot(cpos(1,[1,3]),cpos(2,[1,3]),'k-','LineWidth',2);
     plot(cpos(1,[2,4]),cpos(2,[2,4]),'k-','LineWidth',2);
     plot(cpos(1,[3,4]),cpos(2,[3,4]),'k-','LineWidth',2);
