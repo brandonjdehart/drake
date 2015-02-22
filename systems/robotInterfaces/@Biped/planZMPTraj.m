@@ -159,8 +159,8 @@ pelvis_reference_height = zeros(1,length(support_times));
       
 lfoot_link_con_ind = [link_constraints.link_ndx]==biped.foot_body_id.left;
 rfoot_link_con_ind = [link_constraints.link_ndx]==biped.foot_body_id.right;
-lfoot_des = evaluateSplineInLinkConstraints(0,link_constraints,lfoot_link_con_ind);
-rfoot_des = evaluateSplineInLinkConstraints(0,link_constraints,rfoot_link_con_ind);
+lfoot_des = evaluateSplineInLinkConstraints(options.t0,link_constraints,lfoot_link_con_ind);
+rfoot_des = evaluateSplineInLinkConstraints(options.t0,link_constraints,rfoot_link_con_ind);
 pelvis_reference_height(1) = min(lfoot_des(3),rfoot_des(3));
 
 for i=1:length(support_times)-1

@@ -25,7 +25,7 @@ classdef QPController < MIMODrakeSystem
 
     qddframe = controller_data.acceleration_input_frame; % input frame for desired qddot
 
-    input_frame = MultiCoordinateFrame([{r.getStateFrame,qddframe,atlasFrames.FootContactState},body_accel_input_frames]);
+    input_frames = [{r.getStateFrame,qddframe,atlasFrames.FootContactState},body_accel_input_frames];
 
     % whether to add desired centroidal momentum as an input
     if ~isfield(options,'input_h_des')
@@ -35,8 +35,9 @@ classdef QPController < MIMODrakeSystem
     end
 
     if options.input_h_des
-      input_frame.appendFrame(atlasFrames.CentroidalMomentum);
+      input_frames = [input_frames,{atlasFrames.CentroidalMomentum}];
     end
+    input_frame = MultiCoordinateFrame(input_frames);
 
     % whether to output generalized accelerations AND inputs (u)
     if ~isfield(options,'output_qdd')
