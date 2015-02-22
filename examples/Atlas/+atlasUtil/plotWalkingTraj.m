@@ -27,6 +27,8 @@ rms_zmp = 0;
 rms_com = 0;
 rms_foot = 0;
 T = floor(T/dt)*dt;
+SL = zeros(3, length(ts));
+SR = zeros(3, length(ts));
 com = zeros(3, length(ts));
 comdes = zeros(2, length(ts));
 zmpdes = zeros(2, length(ts));
@@ -63,6 +65,10 @@ for i=1:length(ts)
 
   lfoot_p = forwardKin(r,kinsol,lfoot,[0;0;0],1);
   rfoot_p = forwardKin(r,kinsol,rfoot,[0;0;0],1);
+  
+  Sdata = getSFPEData(r, kinsol, q, qd);
+  SL(:,i) = findSFPE(rfoot_p(1:3),Sdata);
+  SR(:,i) = findSFPE(lfoot_p(1:3),Sdata);
 
   lfoot_pos(:,i) = lfoot_p;
   rfoot_pos(:,i) = rfoot_p;
@@ -111,6 +117,24 @@ plot(ts,comdes(2,:),'g');
 plot(ts,com(2,:),'m.-');
 hold off;
 
+figure(4);
+clf;
+subplot(2,1,1);
+plot(ts,rfoot_pos(1,:),'r');
+hold on;
+plot(ts,lfoot_pos(1,:),'b');
+plot(ts,SR(1,:),'m');
+plot(ts,SL(1,:),'g');
+hold off;
+
+subplot(2,1,2);
+plot(ts,rfoot_pos(2,:),'r');
+hold on;
+plot(ts,lfoot_pos(2,:),'b');
+plot(ts,SR(2,:),'m');
+plot(ts,SL(2,:),'g');
+hold off;
+
 figure(3)
 clf;
 plot(zmpdes(1,:),zmpdes(2,:),'b','LineWidth',3);
@@ -118,6 +142,8 @@ hold on;
 plot(zmpact(1,:),zmpact(2,:),'r.-','LineWidth',1);
 %plot(comdes(1,:),comdes(2,:),'g','LineWidth',3);
 %plot(com(1,:),com(2,:),'m.-','LineWidth',1);
+plot(SR(1,:),SR(2,:),'m','LineWidth',1);
+plot(SL(1,:),SL(2,:),'g','LineWidth',1);
 
 left_foot_steps = eval(lfoottraj,lfoottraj.getBreaks);
 tc_lfoot = getTerrainContactPoints(r,lfoot);
