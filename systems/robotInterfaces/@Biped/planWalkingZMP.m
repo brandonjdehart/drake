@@ -1,7 +1,9 @@
-function walking_plan_data = planWalkingZMP(obj, x0, footstep_plan)
+function walking_plan_data = planWalkingZMP(obj, x0, footstep_plan,options)
 % Construct a dynamic walking plan based on the ZMP formulation.
 % @param x0 the initial robot state vector
 % @param footstep_plan a FootstepPlan
+
+if nargin < 4; options = struct(); end
 
 path_handle = addpathTemporary(fullfile(getDrakePath(), 'examples', 'ZMP'));
 
@@ -14,7 +16,7 @@ end
 nq = getNumPositions(obj);
 q0 = x0(1:nq);
 
-[zmptraj,link_constraints, support_times, supports] = planZMPTraj(obj, q0, footstep_plan.footsteps);
+[zmptraj,link_constraints, support_times, supports] = planZMPTraj(obj, q0, footstep_plan.footsteps,options);
 zmptraj = setOutputFrame(zmptraj,desiredZMP);
 
 kinsol = doKinematics(obj, q0);
