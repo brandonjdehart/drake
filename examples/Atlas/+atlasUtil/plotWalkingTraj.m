@@ -34,10 +34,15 @@ zmpact = zeros(2, length(ts));
 lfoot_pos = zeros(6, length(ts));
 rfoot_pos = zeros(6, length(ts));
 
-rfoottraj = PPTrajectory(pchip(walking_plan_data.link_constraints(1).ts,...
-                               walking_plan_data.link_constraints(1).poses));
-lfoottraj = PPTrajectory(pchip(walking_plan_data.link_constraints(2).ts,...
-                               walking_plan_data.link_constraints(2).poses));
+if isfield(walking_plan_data.link_constraints(1), 'ts')
+  rfoottraj = PPTrajectory(pchip(walking_plan_data.link_constraints(1).ts,...
+                                 walking_plan_data.link_constraints(1).poses));
+  lfoottraj = PPTrajectory(pchip(walking_plan_data.link_constraints(2).ts,...
+                                 walking_plan_data.link_constraints(2).poses));
+else
+  rfoottraj = walking_plan_data.link_constraints(1).traj;
+  lfoottraj = walking_plan_data.link_constraints(2).traj;
+end
 
 for i=1:length(ts)
   % ts is from the walking plan, but traj is only defined at the dt
