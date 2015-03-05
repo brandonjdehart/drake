@@ -221,7 +221,15 @@ for i = 1:nT
     jGvar = [(1:nq)';jCvar_cell{i}];
     Flow = [-inf;Cmin_cell{i}];
     Fupp = [inf;Cmax_cell{i}];
-    [x_sol,F,info(i)] = snopt(x0,xlow(:,i),xupp(:,i),Flow,Fupp,'snoptUserfun',0,1,A,iAfun,jAvar,iGfun,jGvar);
+    if checkDependency('snopt')
+        [x_sol,F,info(i)] = snopt(x0,xlow(:,i),xupp(:,i),Flow,Fupp,'snoptUserfun',0,1,A,iAfun,jAvar,iGfun,jGvar);
+    else
+        xmul = zeros(size(xlow(:,i)));
+        xstate = xmul;
+        Fmul = zeros(size(Flow));
+        Fstate = Fmul;
+        [x_sol,F,info(i)] = snopt(x0,xlow(:,i),xupp(:,i),xmul,xstate,Flow,Fupp,Fmul,Fstate,'snoptUserfun',0,1,A,iAfun,jAvar,iGfun,jGvar);
+    end
     q(:,i) = x_sol(1:nq);
     if(debug_mode)
       Fname = [{'objective'};Cname_cell{i}];

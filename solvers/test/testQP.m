@@ -39,8 +39,11 @@ end
 if(checkDependency('gurobi_mex'))
   solvers = [solvers,{'gurobi_mex'}];
 end
-if(checkDependency('snopt'))
+if(checkDependency('snopt') || checkDependency('nonlinearprogramsnoptmex'))
   solvers = [solvers,{'snopt'}];
+end
+if(checkDependency('studentsnopt'))
+  solvers = [solvers,{'studentsnopt'}];
 end
 testSolvers(prog,solvers,1e-3);
 warning(w);
@@ -64,8 +67,11 @@ if(nargin<2)
   if(checkDependency('fastqp'))
     solvers = [solvers,{'fastqp'}];
   end
-  if(checkDependency('snopt'))
+  if(checkDependency('snopt') || checkDependency('nonlinearprogramsnoptmex'))
     solvers = [solvers,{'snopt'}];
+  end
+  if(checkDependency('studentsnopt'))
+    solvers = [solvers,{'studentsnopt'}];
   end
 end
 [x,objval,exitflag,execution_time]=compareSolvers(prog,randn(prog.num_vars,1),solvers);

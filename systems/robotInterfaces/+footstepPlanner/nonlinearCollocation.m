@@ -13,7 +13,7 @@ function [plan, solvertime] = nonlinearCollocation(biped, seed_plan, weights, go
 % @goal_pos a struct containing fields 'right' and 'left', indicating the desired positions of
 %           the feet after walking
 
-if checkDependency('snopt')
+if checkDependency('snopt') || checkDependency('studentsnopt')
   USE_SNOPT = 1;
 else
   USE_SNOPT = 0;
@@ -175,10 +175,17 @@ if USE_SNOPT
   global SNOPT_USERFUN
   SNOPT_USERFUN = @collocation_userfun;
   t0 = tic();
-  [xstar, fval, ~, ~, exitflag] = snsolve(x0,xlow,xupp,xmul,xstate,    ...
-               Flow,Fupp,Fmul,Fstate,      ...
-               ObjAdd,ObjRow,A_sn(iAndx),iAfun,jAvar,...
-               iGfun,jGvar,'snoptUserfun');
+  if checkDependency('snopt')
+      [xstar, fval, ~, ~, exitflag] = snsolve(x0,xlow,xupp,xmul,xstate,    ...
+                   Flow,Fupp,Fmul,Fstate,      ...
+                   ObjAdd,ObjRow,A_sn(iAndx),iAfun,jAvar,...
+                   iGfun,jGvar,'snoptUserfun');
+  else
+      [xstar, fval, ~, ~, exitflag] = snsolve(x0,xlow,xupp,xmul,xstate,    ...
+                   Flow,Fupp,Fmul,Fstate,'snoptUserfun',      ...
+                   ObjAdd,ObjRow,A_sn(iAndx),iAfun,jAvar,...
+                   iGfun,jGvar);
+  end
   solvertime = toc(t0);
   if debug
     exitflag
