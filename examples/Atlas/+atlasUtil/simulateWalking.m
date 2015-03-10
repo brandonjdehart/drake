@@ -15,6 +15,7 @@ options = applyDefaults(options, struct('use_mex', true,...
                                         'use_bullet', false,...
                                         'use_ik', false,...
                                         'use_angular_momentum', false,...
+                                        'use_linear_momentum', false,...
                                         'draw_button', true));
                                       
 if ~isfield(options, 'v') || isempty(options.v)
@@ -59,6 +60,12 @@ if options.use_angular_momentum
   options.Kp_ang = 1.0; % angular momentum proportunal feedback gain
   options.W_kdot = 1e-5*eye(3); % angular momentum weight
 end
+if options.use_linear_momentum
+  options.Kp_lin = 1.0; % linear momentum proportional feedback gain
+  options.W_ldot = 1e-5*eye(3); % linear momentum weight
+  options.use_mex = false;
+end
+
 
 if (options.use_ik)
   options.w_qdd = 0.001*ones(nq,1);
