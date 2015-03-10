@@ -87,8 +87,13 @@ classdef PelvisMotionControlBlock < DrakeSystem
       lfoot_link_con_ind = [ctrl_data.link_constraints.link_ndx]==obj.robot.foot_body_id.left;
       rfoot_link_con_ind = [ctrl_data.link_constraints.link_ndx]==obj.robot.foot_body_id.right;
 
-      lfoot_des = evaluateSplineInLinkConstraints(t,ctrl_data.link_constraints,lfoot_link_con_ind);
-      rfoot_des = evaluateSplineInLinkConstraints(t,ctrl_data.link_constraints,rfoot_link_con_ind);
+      if isfield(ctrl_data.link_constraints,'traj')
+        lfoot_des = fasteval(ctrl_data.link_constraints(lfoot_link_con_ind).traj,t);
+        rfoot_des = fasteval(ctrl_data.link_constraints(rfoot_link_con_ind).traj,t);
+      else
+        lfoot_des = evaluateSplineInLinkConstraints(t,ctrl_data.link_constraints,lfoot_link_con_ind);
+        rfoot_des = evaluateSplineInLinkConstraints(t,ctrl_data.link_constraints,rfoot_link_con_ind);
+      end
       
       if (obj.use_mex == 0 || obj.use_mex == 2)
         q = x(1:obj.nq);

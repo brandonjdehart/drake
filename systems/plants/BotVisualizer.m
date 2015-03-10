@@ -225,7 +225,10 @@ classdef BotVisualizer < RigidBodyVisualizer
         error('need ffmpeg.  rerun make configure from the prompt to help find it');
       end
       
-      if (nargin<2)
+      if (nargin < 4)
+        options = struct();
+      end
+      if (nargin<3)
         [filename,pathname] = uiputfile('*','Save playback to movie');
         if isequal(filename,0) || isequal(pathname,0)
           return;
