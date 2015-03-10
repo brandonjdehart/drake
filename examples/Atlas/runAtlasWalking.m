@@ -67,7 +67,10 @@ footstep_plan = r.planFootsteps(q0, goal_pos);
 walking_plan_data = r.planWalkingZMP(q0, footstep_plan);
 
 %% Simulate walking, visualize, and plot trajectory
-traj = atlasUtil.simulateWalking(r, walking_plan_data, example_options.use_mex, false, example_options.use_bullet, example_options.use_angular_momentum, true);
+sim_opts = struct('use_mex', example_options.use_mex,...
+                  'use_bullet', example_options.use_bullet,...
+                  'use_angular_momentum', example_options.use_angular_momentum);
+traj = atlasUtil.simulateWalking(r, walking_plan_data, sim_opts);
 
 playback(v,traj,struct('slider',true));
 
