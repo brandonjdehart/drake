@@ -105,9 +105,13 @@ classdef BodyMotionControlBlock < DrakeSystem
       end
 
       if obj.use_plan_shift
-        body_des(3) = body_des(3) - ctrl_data.plan_shift(3);
+        body_des(1:3) = body_des(1:3) - ctrl_data.plan_shift(1:3);
       end
       
+      % lcmgl = LCMGLClient(sprintf('link_%d_desired', obj.body_ind));
+      % lcmgl.sphere(body_des(1:3), 0.03, 20, 20);
+      % lcmgl.switchBuffers();
+
       if (obj.use_mex == 0 || obj.use_mex==2)
         q = x(1:obj.nq);
         qd = x(obj.nq+1:end);

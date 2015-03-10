@@ -27,10 +27,10 @@ classdef Atlas < TimeSteppingRigidBodyManipulator & Biped
       warning(w);
 
       if (~strcmp(options.hands, 'none'))
-        if (strcmp(options.hands, 'robotiq'))
+        if (strcmp(options.hands, 'robotiq') || strcmp(options.hands, 'robotiq_tendons') || strcmp(options.hands, 'robotiq_simple'))
           options_hand.weld_to_link = findLinkId(obj,'r_hand');
           obj.hands = 1;
-          obj = obj.addRobotFromURDF(getFullPathFromRelativePath('urdf/robotiq.urdf'), [0; -0.195; -0.01], [0; -3.1415/2; 3.1415], options_hand);
+          obj = obj.addRobotFromURDF(getFullPathFromRelativePath(['urdf/', options.hands, '.urdf']), [0; -0.195; -0.01], [0; -3.1415/2; 3.1415], options_hand);
         elseif (strcmp(options.hands, 'robotiq_weight_only'))
           % Adds a box with weight roughly approximating the hands, so that
           % the controllers know what's up
@@ -295,7 +295,8 @@ classdef Atlas < TimeSteppingRigidBodyManipulator & Biped
                                     'drake_min_hold_time', 1.0,... % minimum time in double support (s)
                                     'drake_instep_shift', 0.0,... % Distance to shift ZMP trajectory inward toward the instep from the center of the foot (m)
                                     'mu', 1.0,... % friction coefficient
-                                    'constrain_full_foot_pose', true); % whether to constrain the swing foot roll and pitch
+                                    'constrain_full_foot_pose', true,... % whether to constrain the swing foot roll and pitch
+                                    'pelvis_height_above_foot_sole', 0.84); % default pelvis height when walking
     hands = 0; % 0, none; 1, Robotiq
     % preconstructing these for efficiency
     left_full_support
