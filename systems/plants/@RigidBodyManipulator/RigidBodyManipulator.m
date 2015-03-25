@@ -1566,7 +1566,7 @@ classdef RigidBodyManipulator < Manipulator
 
       m = 0;
       for i=1:length(model.body)
-        if robotnum == -1 || model.body(i).robotnum == robotnum
+        if isBodyPartOfRobot(model, model.body(i), robotnum)
           bm = model.body(i).mass;
           m = m + bm;
         end
@@ -2440,7 +2440,7 @@ classdef RigidBodyManipulator < Manipulator
     end
 
     function id = findCollisionFilterGroupID(model,collision_fg_name)
-        id = uint16(find(strcmp(model.collision_filter_groups.keys(),collision_fg_name)));
+        id = find(strcmp(model.collision_filter_groups.keys(),collision_fg_name));
         if isempty(id)
           error('RigidBodyManipulator:findCollisionFilterGroupID', ...
                 'Unable to find collision filter group, %s',collision_fg_name);

@@ -226,7 +226,7 @@ template <typename Derived>
 Eigen::Matrix<typename Derived::Scalar, 3, 3> axis2rotmat(const Eigen::MatrixBase<Derived>& a)
 {
   EIGEN_STATIC_ASSERT_VECTOR_SPECIFIC_SIZE(Eigen::MatrixBase<Derived>, 4);
-  const auto& axis = a.template head<3>();
+  const auto& axis = (a.template head<3>())/(a.template head<3>()).norm();
   const auto& theta = a(3);
   auto x = axis(0);
   auto y = axis(1);
@@ -1186,6 +1186,18 @@ template DLLEXPORT Eigen::Matrix<double, 3, Eigen::Dynamic> dcrossProduct(
     const Eigen::MatrixBase<Eigen::Block<Eigen::Matrix<double, 3, -1, 0, 3, -1>, 3, 1, true>>& b,
     const Gradient<Eigen::Block<Eigen::Matrix<double, 6, 1, 0, 6, 1> const, 3, 1, false>, Eigen::Dynamic>::type& da,
     const Gradient<Eigen::Block<Eigen::Matrix<double, 3, -1, 0, 3, -1>, 3, 1, true>, Eigen::Dynamic>::type& db);
+
+template DLLEXPORT Eigen::Matrix<double, 3, Eigen::Dynamic> dcrossProduct(
+    const Eigen::MatrixBase<Eigen::Block<Eigen::Block<Eigen::Matrix<double, 6, -1, 0, 6, -1>, 3, -1, false>, 3, 1, true>>& a,
+    const Eigen::MatrixBase<Eigen::Matrix<double, 3, 1, 0, 3, 1>>& b,
+    const Gradient<Eigen::Block<Eigen::Block<Eigen::Matrix<double, 6, -1, 0, 6, -1>, 3, -1, false>, 3, 1, true>, Eigen::Dynamic>::type& da,
+    const Gradient<Eigen::Matrix<double, 3, 1, 0, 3, 1>, Eigen::Dynamic>::type& db);
+
+template DLLEXPORT Eigen::Matrix<double, 3, Eigen::Dynamic> dcrossProduct(
+    const Eigen::MatrixBase<Eigen::Block<Eigen::Matrix<double, 6, 1, 0, 6, 1>, 3, 1, false>>& a,
+    const Eigen::MatrixBase<Eigen::Matrix<double, 3, 1, 0, 3, 1>>& b,
+    const Gradient<Eigen::Block<Eigen::Matrix<double, 6, 1, 0, 6, 1>, 3, 1, false>, Eigen::Dynamic>::type& da,
+    const Gradient<Eigen::Matrix<double, 3, 1, 0, 3, 1>, Eigen::Dynamic>::type& db);
 
 template DLLEXPORT DHomogTrans<MatrixXd>::type dHomogTrans(
     const Isometry3d&,
