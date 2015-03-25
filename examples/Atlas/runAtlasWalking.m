@@ -65,6 +65,8 @@ goal_pos = struct('right', rfoot_navgoal, 'left', lfoot_navgoal);
 footstep_plan = r.planFootsteps(q0, goal_pos);
 
 walking_plan_data = r.planWalkingZMP(q0, footstep_plan);
+r.warning_manager.warnOnce('Drake:MuAssumedToBe1', 'Setting mu=1 because contactConstraintsBV.m assumes that to be the case');
+walking_plan_data.mu = 1.0;
 
 %% Simulate walking, visualize, and plot trajectory
 sim_opts = struct('use_mex', example_options.use_mex,...
