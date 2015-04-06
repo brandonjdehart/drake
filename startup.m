@@ -7,3 +7,5 @@ checkDependency('studentsnopt');
 checkDependency('Nonlinearprogramsnoptmex');
 checkDependency('spotless');
 checkDependency('lcm');
+
+cd examples/Atlas;
