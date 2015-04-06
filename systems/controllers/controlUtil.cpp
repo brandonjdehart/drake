@@ -306,7 +306,7 @@ std::vector<SupportStateElement> parseSupportData(const mxArray* supp_data) {
     num_pts = mxGetN(mxGetField(supp_data, i, "contact_pts"));
     pm = mxGetField(supp_data, i, "support_logic_map");
     if (mxIsDouble(pm)) {
-      logic_map_double = mxGetPr(pm);
+      logic_map_double = mxGetPrSafe(pm);
       for (j = 0; j < 4; j++) {
         se.support_logic_map[j] = logic_map_double[j] != 0;
       }
@@ -315,7 +315,7 @@ std::vector<SupportStateElement> parseSupportData(const mxArray* supp_data) {
     }
     pm = mxGetField(supp_data, i, "contact_pts");
     contact_pts.resize(mxGetM(pm), mxGetN(pm));
-    memcpy(contact_pts.data(), mxGetPr(pm), sizeof(double)*mxGetNumberOfElements(pm));
+    memcpy(contact_pts.data(), mxGetPrSafe(pm), sizeof(double)*mxGetNumberOfElements(pm));
 
     for (j = 0; j < num_pts; j++) {
       contact_pt.head(3) = contact_pts.col(j);
@@ -396,16 +396,6 @@ std::vector<SupportStateElement> getActiveSupports(RigidBodyManipulator* r, void
     }
   }
   return active_supports;
-}
-
-void sizecheck(const mxArray* mat, int M, int N) {
-  if (mxGetM(mat) != M) {
-    mexErrMsgIdAndTxt("Drake:WrongSize", "wrong number of rows. Expected: %d but got: %d", M, mxGetM(mat));
-  }
-  if (mxGetN(mat) != N) {
-    mexErrMsgIdAndTxt("Drake:WrongSize", "wrong number of columns. Expected: %d but got: %d", N, mxGetN(mat));
-  }
-  return;
 }
 
 Vector6d bodyMotionPD(RigidBodyManipulator *r, DrakeRobotState &robot_state, const int body_index, const Ref<const Vector6d> &body_pose_des, const Ref<const Vector6d> &body_v_des, const Ref<const Vector6d> &body_vdot_des, const Ref<const Vector6d> &Kp, const Ref<const Vector6d> &Kd) {
